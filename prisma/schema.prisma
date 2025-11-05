@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  //output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  //directUrl = env("DIRECT_URL")
+}
+
+model Category {
+  id                String        @id @map("id") // manually generated UUID
+  categoryName      String
+  image             String
+  description       String
+  taxApplicability  Boolean       @default(false)
+  taxNumber         String?
+  taxType           String
+  subCategories     Subcategory[] // 1:N relation with Subcategory
+}
+
+model Subcategory {
+  id                String        @id @map("id") // manually generated UUID
+  subcategoryName   String
+  image             String?
+  description       String
+  taxApplicability  Boolean       @default(false)
+  taxNumber         String?       @default("0")
+  categoryId        String?       // foreign key to Category
+  category          Category?     @relation(fields: [categoryId], references: [id])
+  items             Item[]        // 1:N relation with Item
+}
+
+model Item {
+  id                String        @id @map("id") // manually generated UUID
+  itemName          String
+  image             String?
+  description       String
+  taxApplicability  Boolean       @default(false)
+  taxNumber         String        @default("0")
+  baseAmount        Float
+  discount          Float         @default(0)
+  totalAmount       Float
+  subcategoryId     String?       // foreign key to Subcategory
+  subcategory       Subcategory?  @relation(fields: [subcategoryId], references: [id])
+}
+

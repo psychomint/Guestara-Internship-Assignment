@@ -1,22 +1,24 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import routes from "./routes/index.js";
-import prisma from "./config/prismaClient.js";
 import morgan from "morgan";
+import routes from "./routes/index.js";
+import { PrismaClient } from "@prisma/client";
 
 dotenv.config();
 
 const app = express();
+const prisma = new PrismaClient();
+
 app.use(express.json());
 app.use(cors());
 app.use(morgan("dev"));
 
-const port = process.env.PORT || 3000;
+// Use environment port or default 3000
+const PORT = process.env.PORT || 3000;
 
-// Routes to Category, subcategory, item.
-app.use("/", routes)
-
+// Routes
+app.use("/", routes);
 
 // Global error handler
 app.use((err, req, res, next) => {
@@ -27,27 +29,39 @@ app.use((err, req, res, next) => {
   });
 });
 
-
-// Check database connection and start server
+// Function to start server with retry logic
 async function startServer() {
-  try {
-    await prisma.$connect();
-    console.log("✅ Connected to PostgreSQL via Prisma");
+  let retries = 5;
+  while (retries > 0) {
+    try {
+      await prisma.$connect();
+      console.log("✅ Connected to PostgreSQL via Prisma");
 
-    app.listen(port, () => {
-      console.log(`🚀 Server running on port ${port}`);
-    });
-  } catch (error) {
-    console.error("❌ Error connecting to PostgreSQL:", error);
-    process.exit(1);
+      app.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT}`);
+      });
+
+      break; // Exit loop if connection succeeds
+    } catch (error) {
+      console.error(
+        `❌ Error connecting to PostgreSQL, retries left: ${retries - 1}`
+      );
+      console.error(error.message);
+      retries--;
+      if (retries === 0) {
+        console.error("❌ Could not connect to database after multiple attempts. Exiting.");
+        process.exit(1);
+      }
+      await new Promise((res) => setTimeout(res, 5000)); // wait 5 seconds before retry
+    }
   }
 }
 
 startServer();
 
-// Graceful shutdown handler
+// Graceful shutdown
 process.on("SIGINT", async () => {
-  console.log("\n🛑 SIGINT received (e.g., Ctrl+C)");
+  console.log("\n🛑 SIGINT received (Ctrl+C)");
   await prisma.$disconnect();
   console.log("🔌 Prisma disconnected");
   process.exit(0);

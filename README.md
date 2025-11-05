@@ -1,7 +1,9 @@
 This repository contains backend code for menu management, including operations for categories, subcategories, and items. The routes and data models for Category, Subcategory, and Item were created and handled accordingly
 
-- Live link of backend deployed on vercel: 
+- Live link of backend deployed on render: https://guestara-internship-assignment-txkh.onrender.com
+
 - Postman API Documentation: https://documenter.getpostman.com/view/40568660/2sB3WqufTy
+
 - Loom Video: https://www.loom.com/share/c8faabf3dae7413ea2870214a0c07d81
 
 ### Tech Stack
